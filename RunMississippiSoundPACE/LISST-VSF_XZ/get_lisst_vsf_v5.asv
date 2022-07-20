@@ -1,0 +1,151 @@
+function proc = get_lisst_vsf_v5(SN,scatfile,fbfile,beamc,alpha,isplot)
+%%% This routine is to calibrate LISST-VSF using absolute calibration
+%%% coefficient Hu et al. OE,2019.
+% Updates on 12-02-2019
+%  (1) change the reference PMT voltage to 668mV.
+%  (2) beamc as an optional variable is added.
+% Update on 2021-06-22
+%   (1) Add SN number
+%   (2) Define absCal for SN
+
+% scatfile : the LISST-VSF scattering measurement file
+% fbfile   : the LISST-VSF background file
+% beamc    : beam attenuation coefficient, optional
+% isplot   : 1 for ploting and 0 for non-polting
+
+%  Description of output variables in proc
+%  p11_uncal_norm .    :  normalized eyeball P11 DN values with blank subtraction;
+%  p11_uncal_norm_bulk :  normalized eyeball P11 DN values without blank subtraction;
+%  p11_absCal          :  absolutely calibrated eyeball P11 with blank subtraction;
+%  p11_absCal_bulk     :  absolutely calibrated eyeball P11 without blank subtraction;
+%  P11_absCal          :  [ring detector + absolutely calibrated eyeball],with blank subtraction
+%  P11_absCal_bulk     :  [ring detector + absolutely calibrated eyeball],without blank subtraction
+%  P11                 :  [ring detector + eyeball], default method with blank subtraction;
+%  P11_bulk            :  [ring detector + eyeball], default method without blank subtraction;
+
+%  Tips: suffix "bulk" represents no blank subtration; P11 means including ring
+%  and eyeball; p11 means only eyeball.
+
+
+switch SN
+    case 1662
+        % pmt_gain_set = [400 435 470 510 550 595 645 700 760 820];  % before  201911
+        % voltage_ref = 645; absCal = 2.3E-3;
+        % pmt_gain_set  = [414 450 486 528 569 616 668 725 787 849]; % after  201911
+        voltage_ref = 668;
+        absCal = 1.48E-3;
+        % absCal = 2.1E-3; % where does this come from?
+        % voltage_ref = 725; absCal  = 7.013E-4;
+    case 1425
+        voltage_ref = 644;
+        absCal = 1.27E-3;
+    case 1664
+        % voltage_ref = 640; % See Calibration of LISST-VSF 1664 by Tika
+        % absCal = 3.5E-3; %
+        % Tika and Lianbo's results are almost identical. Tika used a
+        % reference voltage of 640 mV, which is not one the Gain settings.
+        % The voltages are: 471, 513, 554, 601, 648, 702, 761, 825, 896,
+        % and 967 mV.
+        % Lianbo's analysis:
+        voltage_ref = 601; % see Tika/VSFdata/Calibration1664/Lianbo
+        absCal = 6.2e-3;
+    otherwise
+        error('Wrong SN number');
+end
+
+
+plotData = 0; gama = 8.6;
+proc = mylisstvsf_makep_v5(SN, scatfile, fbfile,beamc, alpha, plotData);
+dims = size(proc.p11_uncal);
+
+p11_uncal = proc.p11_uncal;
+p12_uncal = proc.p12_uncal;
+p11_uncal_bulk = proc.p11_uncal_bulk;
+p12_uncal_bulk = proc.p12_uncal_bulk;
+p22_uncal = proc.p22_uncal;
+p22_uncal_bulk_1 = proc.p22_uncal_bulk_1;
+p22_uncal_bulk_2 = proc.p22_uncal_bulk_2;
+
+voltage = proc.pmt_gain;
+voltage = repmat(voltage,1,dims(2));
+p11_uncal_norm = p11_uncal./(voltage/voltage_ref).^gama;
+p11_uncal_norm_bulk = p11_uncal_bulk./(voltage/voltage_ref).^gama;
+p12_uncal_norm = p12_uncal./(voltage/voltage_ref).^gama;
+p12_uncal_norm_bulk = p12_uncal_bulk./(voltage/voltage_ref).^gama;
+p22_uncal_norm = p22_uncal./(voltage/voltage_ref).^gama;
+p22_uncal_norm_bulk_1 = p22_uncal_bulk_1./(voltage/voltage_ref).^gama;
+p22_uncal_norm_bulk_2 = p22_uncal_bulk_2./(voltage/voltage_ref).^gama;
+
+p11_absCal = p11_uncal_norm.*absCal;
+p11_absCal_bulk = p11_uncal_norm_bulk.*absCal;
+p12_absCal = p12_uncal_norm.*absCal;
+p12_absCal_bulk = p12_uncal_norm_bulk.*absCal;
+p22_absCal = p22_uncal_norm.*absCal;
+p22_absCal_bulk_1 = p22_uncal_norm_bulk_1.*absCal;
+p22_absCal_bulk_2 = p22_uncal_norm_bulk_2.*absCal;
+
+idx_opt =  proc.pmt_gain<=569;
+p11_opt = p11_absCal;
+p11_opt(idx_opt,:) = proc.P11(idx_opt,33:end);
+p11_opt_bulk = p11_absCal_bulk;
+p11_opt_bulk(idx_opt,:) = proc.P11_bulk(idx_opt,33:end);
+
+proc.p11_uncal_norm = p11_uncal_norm;
+proc.p11_uncal_norm_bulk = p11_uncal_norm_bulk;
+proc.p12_uncal_norm = p12_uncal_norm;
+proc.p12_uncal_norm_bulk = p12_uncal_norm_bulk;
+proc.p11_absCal = p11_absCal;
+proc.p11_absCal_bulk = p11_absCal_bulk;
+proc.p12_absCal = p12_absCal;
+proc.p12_absCal_bulk = p12_absCal_bulk;
+proc.p22_absCal = p22_absCal;
+proc.p22_absCal_bulk_1 = p22_absCal_bulk_1;
+proc.p22_absCal_bulk_2 = p22_absCal_bulk_2;
+
+proc.P11_absCal = [proc.P11(:,1:32) p11_absCal];
+proc.P11_opt = [proc.P11(:,1:32) p11_opt];
+proc.P11_absCal_bulk= [proc.P11_bulk(:,1:32) p11_absCal_bulk];
+proc.P11_opt_bulk = [proc.P11_bulk(:,1:32) p11_opt_bulk];
+if isplot
+    fh=figure('visible','on');
+    set(fh, 'Position', [0 0 800 800]);
+    angle = proc.Angles(33:end);
+    p11_psw = betasw_ZHH2009(517,20,angle,0);
+
+    subplot(2,2,1);
+    semilogy(angle,proc.p11_sample(1,:),'k')
+    hold on
+    semilogy(angle,proc.p11_blank(1,:),'r')
+    semilogy(angle,proc.p11_sample,'k')
+    semilogy(angle,proc.p11_blank,'r')
+    ylabel('Raw bulk P_{11}')
+    legend('Sample','Blank');legend boxoff;
+    set(gca,'xlim',[20 160]);
+
+    subplot(2,2,2);
+    semilogy(angle,median(proc.p11_absCal_bulk,'omitnan'),'r')
+    hold on
+    semilogy(angle,p11_psw,'k')
+    legend('Absolute Cal.','Pure Seawater');legend boxoff;
+    ylabel('Calibrated bulk P_{11} (m^-^1)')
+
+    subplot(2,2,3);
+    semilogy(angle,median(proc.P11(:,33:end),'omitnan'),'b')
+    hold on
+    semilogy(angle,median(proc.p11_absCal,'omitnan'),'r')
+    semilogy(angle,p11_psw,'k')
+    xlabel('Angle   (degree)');    ylabel('Calibrated P_{11,p} (m^-^1)')
+    set(gca,'xlim',[10 160]);
+    legend('Default','Absolute ','Pure Seawater'); legend boxoff;
+
+    subplot(2,2,4);
+    loglog(proc.Angles,median(proc.P11_opt,'omitnan'),'k-o','markersize',3.0,'markerfacecolor','k')
+    hold on
+    loglog(angle,median(proc.P11(:,33:end),'omitnan'),'b.','markersize',3.0)
+    loglog(angle,median(proc.P11_absCal(:,33:end),'omitnan'),'r.','markersize',3.0)
+    %     loglog(proc.Angles,median(proc.P11_opt,'omitnan'),'k.')
+    text(0.1,0.2,['Gain = ' num2str(median(proc.pmt_gain))],'units','normalized')
+    xlabel('Angle   (degree)');    ylabel('Calibrated P_{11,p} (m^-^1)')
+    legend('P11 Opt','P11 Default','P11 Absolute'); legend boxoff;
+end
+
