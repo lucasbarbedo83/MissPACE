@@ -30,16 +30,11 @@ ui=2;
 [ScatMatrix,PACE]=readLisstVSF_MissPACE(fname,ui,FNlisstvsf);
 
 ccolor=parula(length(PACE));
-figure('Units','centimeters','Position',[1 1 6 18.5]) 
-ax1=axes('position',[0.9 0.9 0.1 0.1],'box', 'off', 'visible','off',...
-    'xtick',[],'ytick',[],'xcolor','none','ycolor','none');
+disp('Legend:')
+figure 
+box on
 hold on
-title('Legend:')
 for i=1:length(PACE)
- str=[char(fieldnotes.StationName(i)),', ',char(fieldnotes.ObsStartTime(i))]
- plot(ax1,i,1,'-','color',ccolor(i,:),'linewidth',2,'DisplayName',str)
+ str=[char(fieldnotes.StationName(i)),' ',char(fieldnotes.ObsStartTime(i))]plot(i,1,'-','color',ccolor(i,:),'DisplayName',str)
 end
-h=legend(ax1,'-DynamicLegend');
-set(h, 'LimitMaxLegendEntries', false,'Fontname','sans','Fontsize',6);
-
-hold off
+box
