@@ -38,7 +38,8 @@ elseif ui==1
 elseif ui==2
    for i=1:length(FNiops)
        str=[datab,'\',char(FNiops(i))];
-       if exist(str,'file')
+       thissample=dir(str);
+       if  ~isempty(thissample)
         n(i)=dir(str);
        else
         n(i).name='NoData';

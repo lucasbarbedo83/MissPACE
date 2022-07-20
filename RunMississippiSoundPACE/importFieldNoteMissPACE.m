@@ -12,7 +12,7 @@ opts = spreadsheetImportOptions("NumVariables", 17);
 
 % Specify sheet and range
 opts.Sheet = "PACE_IOP_Log";
-opts.DataRange = "A2:Q59";
+opts.DataRange = [2 inf];
 
 % Specify column names and types
 opts.VariableNames = ["ObsStartTime", "StnCode", "StationName", "Lat", "Lon", "solartime", "TWD_ft", "Secchi_vis_ft", "ObsZ_ft", "T_C", "Cond", "Salinity", "ObsStopTime", "Comments", "VSF_file", "archive_file", "WAP_extracted"];
