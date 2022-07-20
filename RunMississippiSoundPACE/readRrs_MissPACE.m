@@ -1,26 +1,27 @@
-function [Rrs,PACE]=readRrs_MissPACE(varargin)
+function [Rrs,PACE]=readRrs_MissPACE(fname,ui)
 % Read Rrs from Mississippi Sound PACE Mission
 %   Input
+%   fname: complet path to NRL_USM_PACE_2022
+%          for example, in my laptop:
+%          fname='C:\Users\w10139248\Documents\Oceanography\NRL_USM_PACE_2022'
 %   ui: 1 to select one file manually
 %         0 to run all PACE dataset
 %   Output
 %   Rrs: above water radiometry from selected file or last one
-%   PACE: above water inside the database structured.
+%   PACE: above water inside a database structured.
 %
 % Lucas Barbedo, 19 July 2022
 
-m=nargin;
-database='C:\Users\w10139248\Documents\Oceanography\NRL_USM_PACE_2022\RemoteSensingReflectance';
+database=[fname,'\RemoteSensingReflectance'];
 
-if m>0
-     ui=cell2mat(varargin(1));
+if ui
     [filename, pathname] = uigetfile( ...
         {'*.csv',  'Rrs (*.csv)'}, ...
         'Pick a file', database,...
         'MultiSelect', 'off');
     n(1).name=filename;
     n(1).folder=pathname;
-elseif m==0
+else
     str=[database,'\*.csv'];
     n=dir(str);
 end

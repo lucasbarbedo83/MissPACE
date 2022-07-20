@@ -1,25 +1,24 @@
-function [IOPs,PACE]=readIOPs_MissPACE(varargin)
+function [IOPs,PACE]=readIOPs_MissPACE(fname,ui)
 % Read IOPS from Mississippi Sound PACE Mission
-%   Input(varatgin)
+%   Input 
+%   fname: complet path to NRL_USM_PACE_2022
+%          for example, in my laptop:
+%          fname='C:\Users\w10139248\Documents\Oceanography\NRL_USM_PACE_2022'
 %   ui: 1 to select one file manually
 %         0 to run all PACE dataset
 %   Output
 %   IOPs: inherent optical properties
-%
+%   PACE: inwater inside a database structured.
 % Lucas Barbedo, 19 July 2022
 
 %% to open miliQ water sample, blank
 acsMiliQ=load('acs349_miliQ\acs_349_20220715_blank.mat');
 wl_a=acsMiliQ.ac_blank(1,:);
 wl_c=acsMiliQ.ac_blank(3,:);
-
 %% process DH4
-m=nargin;
-database='C:\Users\w10139248\Documents\Oceanography\NRL_USM_PACE_2022\IOP_data';
-
-if m>0
-    ui=cell2mat(varargin(1));
-    [filename, pathname, filterindex] = uigetfile( ...
+database=[fname,'\IOP_data'];
+if ui==1
+    [filename, pathname] = uigetfile( ...
         {'*',  'IOPs (archive_pair_03.*)'}, ...
         'Pick a file', database,...
         'MultiSelect', 'on');
